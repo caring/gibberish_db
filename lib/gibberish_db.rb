@@ -8,6 +8,7 @@ module Gibberish
     belongs_to :language
     acts_as_cached
     after_save :invalidate_value_cache
+    validates_length_of :key, :within => 1..100
     def self.find_cached_value_by_language_and_key(lang,key)
       get_cache("find_value_by_language_id_and_key:#{lang.id}:#{MD5.md5(key.to_s)}") do
         Translation.find_by_language_id_and_key(lang.id,key.to_s).value
