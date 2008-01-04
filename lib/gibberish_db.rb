@@ -48,9 +48,14 @@ module Gibberish
       self.value.gsub(/\{\w+\}/) { args.shift }
     end
     
+    def to_str
+      interpolated_value
+    end
+    
     def to_s
       interpolated_value
     end
+    
   end
   
   # this is an adapter that exposes a Hash access method
