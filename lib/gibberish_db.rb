@@ -22,9 +22,13 @@ module Gibberish
     validates_length_of :key, :within => 1..100
     attr_accessor :arguments
     def self.find_cached_by_language_and_key(lang,key)
-      get_cache("find_by_language_id_and_key:#{lang.id}:#{MD5.md5(key.to_s)}") do
-        Translation.find_by_language_id_and_key(lang.id,key.to_s)
+      cache_key = "find_by_language_id_and_key:#{lang.id}:#{MD5.md5(key.to_s)}"
+      cached = get_cache(cache_key) {nil}
+      unless cached
+        cached = Translation.find_by_language_id_and_key(lang.id,key.to_s)
+        set_cache(cache_key, cached)
       end
+      return cached
     end
     def invalidate_cache
       clear_cache("find_by_language_id_and_key:#{self.language_id}:#{MD5.md5(self.key.to_s)}")
