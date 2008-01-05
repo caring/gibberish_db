@@ -56,6 +56,10 @@ module Gibberish
       interpolated_value
     end
     
+    def to_html
+      %Q{<span class="translated key_#{key}" lang="#{language.name}">#{interpolated_value}</span>}
+    end
+    
   end
   
   # this is an adapter that exposes a Hash access method

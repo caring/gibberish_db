@@ -3,7 +3,7 @@ module ERB::Util
   #with some fancy javascript
   def h_with_gibberish_support(s)
     if s.is_a?(Gibberish::Translation)
-      %Q{<span class="translated key_#{s.key}" lang="#{s.language.name}">#{s}</span>}
+      s.to_html
     else
       h_without_gibberish_support(s)
     end
