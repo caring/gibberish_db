@@ -114,7 +114,7 @@ module Gibberish
           string.arguments = args
           string
         else
-          interporate_string_without_db(string, *args)
+          interpolate_string_without_db(string, *args)
         end
       end
       alias_method_chain :interpolate_string, :db
