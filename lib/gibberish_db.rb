@@ -49,9 +49,23 @@ module Gibberish
     
     def interpolated_value
       args = (arguments || []).dup 
-      self.value.gsub(/\{\w+\}/) { args.shift }
+      if args.last.is_a? Hash
+        interpolate_with_hash(self.value, args.last)
+      else
+        interpolate_with_strings(self.value, args)
+      end
     end
-    
+
+    def interpolate_with_hash(string, hash)
+      hash.inject(string) do |target, (search, replace)|
+        target.sub("{#{search}}", replace)
+      end 
+    end
+
+    def interpolate_with_strings(string, strings)
+      string.gsub(/\{\w+\}/) { strings.shift }
+    end
+        
     def to_str
       interpolated_value
     end
@@ -95,13 +109,14 @@ module Gibberish
     end
     alias_method_chain :translate, :db
     private
-      def interpolate_string(string, *args)
+      def interpolate_string_with_db(string, *args)
         if string.is_a? Translation
           string.arguments = args
           string
         else
-          string.gsub(/\{\w+\}/) { args.shift }
+          interporate_string_without_db(string, *args)
         end
       end
+      alias_method_chain :interpolate_string, :db
   end
 end
