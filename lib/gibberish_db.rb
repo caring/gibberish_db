@@ -20,9 +20,10 @@ module Gibberish
     after_save :invalidate_cache
     after_destroy :invalidate_cache
     validates_length_of :key, :within => 1..100
+    validates_uniqueness_of :key, :scope => :language_id
     attr_accessor :arguments
     def self.find_cached_by_language_and_key(lang,key)
-      cache_key = "find_by_language_id_and_key:#{lang.id}:#{MD5.md5(key.to_s)}"
+      cache_key = cache_key_for_language_and_key(lang,key)
       cached = get_cache(cache_key) {nil}
       unless cached
         cached = Translation.find_by_language_id_and_key(lang.id,key.to_s)
@@ -30,8 +31,12 @@ module Gibberish
       end
       return cached
     end
+    def self.cache_key_for_language_and_key(lang,key)
+      lang_id = lang.is_a?(Language) ? lang.id : lang
+      ['find_by_language_id_and_key', lang_id, key.to_s[0..100]].join(':')
+    end
     def invalidate_cache
-      clear_cache("find_by_language_id_and_key:#{self.language_id}:#{MD5.md5(self.key.to_s)}")
+      clear_cache(self.class.cache_key_for_language_and_key(language_id, key))
     end
     
     def method_missing(name, *args, &block)
@@ -85,12 +90,12 @@ module Gibberish
       end
     end
     alias_method_chain :load_languages!, :db
-    def create_translation!(string, key)
-      Translation.create!(:value => string, :key => key.to_s, :language_id => Language.find_cached_by_name(current_language).id)
+    def create_translation(string, key)
+      Translation.create(:value => string, :key => key.to_s, :language_id => Language.find_cached_by_name(current_language).id)
     end
     def translate_with_db(string, key, *args)
       return if reserved_keys.include? key
-      target = translations[key] || create_translation!(string,key)
+      target = translations[key] || create_translation(string,key)
       interpolate_string(target.dup, *args.dup)
     end
     alias_method_chain :translate, :db
