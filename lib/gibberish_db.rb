@@ -113,7 +113,7 @@ module Gibberish
                                   :key => key.to_s,
                                   :language_id => Language.find_cached_by_name(current_language).id,
                                   :format => format.to_s) do |translation|
-        logger.warn "Failed to create translation: #{translation.error.full_messages}" unless translation.errors.empty?
+        RAILS_DEFAULT_LOGGER.warn "Failed to create translation: #{translation.errors.full_messages}" unless translation.errors.empty?
       end
     end
     def translate_with_db(string, key, *args)
