@@ -18,7 +18,8 @@ Migrate your database like so:
     create_table "translations" do |t|
       t.column :language_id, :integer, :null => false
       t.column :key, :string, :null => false, :limit => 100 #max length for a column used in an index in mysql
-      t.column :value, :text 
+      t.column :value, :text
+      t.column, :format, :string, :null => false, :default => "inline"
     end
     add_index :translations, [:language_id, :key], :name => :one_translation_per_language, :unique => true
   end

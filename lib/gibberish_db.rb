@@ -21,6 +21,7 @@ module Gibberish
     after_destroy :invalidate_cache
     validates_length_of :key, :within => 1..100
     validates_uniqueness_of :key, :scope => :language_id
+    validates_inclusion_of :format, :in => ['block','inline'], :on => :create
     attr_accessor :arguments
     def self.find_cached_by_language_and_key(lang,key)
       cache_key = cache_key_for_language_and_key(lang,key)
@@ -80,7 +81,8 @@ module Gibberish
     end
     
     def to_html
-      %Q{<span class="translated key_#{key}" lang="#{language.name}">#{interpolated_value}</span>}
+      tagname = (format == "block") ? "div" : "span"
+      %Q{<#{tagname} class="translated key_#{key}" lang="#{language.name}">#{interpolated_value}</#{tagname}>}
     end
     
   end
@@ -104,16 +106,30 @@ module Gibberish
       end
     end
     alias_method_chain :load_languages!, :db
-    def create_translation(string, key)
-      Translation.create(:value => string, :key => key.to_s, :language_id => Language.find_cached_by_name(current_language).id)
+    def create_translation(string, key, *args)
+      format = args.first.delete(:format) if args.first.is_a?(Hash)
+      format ||= :inline
+      returning Translation.create(:value => string,
+                                  :key => key.to_s,
+                                  :language_id => Language.find_cached_by_name(current_language).id,
+                                  :format => format.to_s) do |translation|
+        logger.warn "Failed to create translation: #{translation.error.full_messages}" unless translation.errors.empty?
+      end
     end
     def translate_with_db(string, key, *args)
       return if reserved_keys.include? key
-      target = translations[key] || create_translation(string,key)
-      interpolate_string(target.dup, *args.dup)
+      target = translations[key] || create_translation(string,key,*args)
+      arguments = extract_arguments(args)
+      interpolate_string(target.dup, *arguments.dup)
     end
     alias_method_chain :translate, :db
     private
+      def extract_arguments(args)
+         if (options = args.first).is_a?(Hash)
+           [:format].each {|opt| options.delete(opt)}
+         end
+         return args
+      end
       def interpolate_string_with_db(string, *args)
         if string.is_a? Translation
           string.arguments = args
