@@ -81,7 +81,7 @@ module Gibberish
     end
     
     def to_html
-      tagname = (format == "block") ? "div" : "span"
+      tagname = (self.format == "block") ? "div" : "span"
       %Q{<#{tagname} class="translated key_#{key}" lang="#{language.name}">#{interpolated_value}</#{tagname}>}
     end
     
