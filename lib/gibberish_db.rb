@@ -81,10 +81,29 @@ module Gibberish
     end
     
     def to_html
-      tagname = (self.format == "block") ? "div" : "span"
-      %Q{<#{tagname} class="translated key_#{key}" lang="#{language.name}">#{interpolated_value}</#{tagname}>}
+      if Translation.suppress_html_wrapper?
+        interpolated_value
+      else
+        tagname = (self.format == "block") ? "div" : "span"
+        %Q{<#{tagname} class="translated key_#{key}" lang="#{language.name}">#{interpolated_value}</#{tagname}>}
+      end
+    end
+                    
+    # Execute a block of code while suppressing the HTML wrapping that would
+    # otherwise take place when invoking .to_html
+    def self.suppressing_html_wrapping(&block)
+      old_val = @suppress_html
+      @suppress_html = true
+      begin 
+        yield
+      ensure
+        @supress_html = old_val
+      end
     end
     
+    def self.suppress_html_wrapper?
+      @suppress_html
+    end    
   end
   
   # this is an adapter that exposes a Hash access method
