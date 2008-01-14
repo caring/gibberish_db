@@ -160,3 +160,25 @@ module Gibberish
       alias_method_chain :interpolate_string, :db
   end
 end
+
+class ActionMailer::Base
+  class << self
+    # We want .to_html to be active when invoking action mailer through the
+    # create_XXX functions so that we can edit them in the menagerie. But,
+    # we want it to be inactive through the deliver_XXX functions so that end
+    # users don't see the extra markup. We make that happen here.
+    def method_missing_with_html_suppression(method_symbol, *parameters)
+      case method_symbol.id2name
+      when /^deliver_([_a-z]\w*)/
+        # No HTML for mails that are being delivered
+        Gibberish::Translation.suppressing_html_wrapping do
+          method_missing_without_html_suppression(method_symbol, *parameters)
+        end
+      else
+        # Pass through for the others
+        method_missing_without_html_suppression(method_symbol, *parameters)
+      end
+    end
+    alias_method_chain :method_missing, :html_suppression
+  end
+end
