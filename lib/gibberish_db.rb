@@ -64,7 +64,7 @@ module Gibberish
 
     def interpolate_with_hash(string, hash)
       hash.inject(string) do |target, (search, replace)|
-        target.sub("{#{search}}", replace)
+        target.gsub("{#{search}}", replace)
       end 
     end
 
