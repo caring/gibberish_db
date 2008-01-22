@@ -37,7 +37,7 @@ module Gibberish
       ['find_by_language_id_and_key', lang_id, key.to_s[0..100]].join(':')
     end
     def invalidate_cache
-      clear_cache(self.class.cache_key_for_language_and_key(language_id, key))
+      self.class.clear_cache(self.class.cache_key_for_language_and_key(language_id, key))
     end
     
     def method_missing(name, *args, &block)
