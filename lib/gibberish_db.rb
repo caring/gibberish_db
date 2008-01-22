@@ -97,7 +97,7 @@ module Gibberish
       begin 
         yield
       ensure
-        @supress_html = old_val
+        @suppress_html = old_val
       end
     end
     
