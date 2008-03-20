@@ -1,0 +1,50 @@
+GibberishDb
+===========
+This plugin adds database support to Gibberish (http://errtheblog.com/posts/55-ya-talkin-gibberish) allowing
+you to store (and change) your strings in your database. This probably is a bad idea unless you have a copy-editor
+who is always bugging you to change the text on your website. Strings are cached using acts_as_cached to minimize the
+database impact.
+
+Author:: Chris Eppstein (chris@eppsteins.net)
+Copyright:: (c) Copyright 2008 Caring, Inc. All Rights Reserved.
+License:: Released under the same licensing terms as Gibberish
+
+== Installation
+Migrate your database like so:
+  def self.up
+    create_table "languages" do |t|
+      t.column :name, :string, :null => false, :limit => 15, :unique => true
+    end
+    create_table "translations" do |t|
+      t.column :language_id, :integer, :null => false
+      t.column :key, :string, :null => false, :limit => 100 #max length for a column used in an index in mysql
+      t.column :value, :text
+      t.column, :format, :string, :null => false, :default => "inline"
+    end
+    add_index :translations, [:language_id, :key], :name => :one_translation_per_language, :unique => true
+  end
+  
+  def self.down
+    drop_table "languages"
+    drop_table "translations"
+  end
+
+Add this to your environment.rb:
+  config.after_initialize do
+    Gibberish.load_languages! rescue nil #if you don't rescue, you'll crash during migrations
+  end
+  
+== Dependencies
+* Gibberish (duh!)
+* acts_as_cached (or cache_fu)
+
+== Usage
+Use is the same as before only the strings will come from your database now.
+
+You can now use the following models:
+* +Gibberish::Language+
+* +Gibberish::Translation+
+
+Translation cache is automatically expired after save, but if you add a new language, you'll need
+to call +Gibberish.load_languages!+ again.
+
