@@ -4,14 +4,17 @@ module Gibberish
     has_many :translations
     acts_as_cached
     after_save :invalidate_cache
+
     def self.find_cached_by_name(name)
       get_cache("find_by_name:#{name}") do
         find(:first, :conditions => {:name => name.to_s})
       end
     end
+
     def invalidate_cache
       clear_cache "find_by_name:#{name}"
     end
+
   end
   
   class Translation < ActiveRecord::Base
@@ -22,7 +25,9 @@ module Gibberish
     validates_length_of :key, :within => 1..100
     validates_uniqueness_of :key, :scope => :language_id
     validates_inclusion_of :format, :in => ['block','inline'], :on => :create
+
     attr_accessor :arguments
+
     def self.find_cached_by_language_and_key(lang,key)
       cache_key = cache_key_for_language_and_key(lang,key)
       cached = get_cache(cache_key) {nil}
@@ -32,10 +37,12 @@ module Gibberish
       end
       return cached
     end
+
     def self.cache_key_for_language_and_key(lang,key)
       lang_id = lang.is_a?(Language) ? lang.id : lang
       ['find_by_language_id_and_key', lang_id, key.to_s[0..100]].join(':')
     end
+
     def invalidate_cache
       self.class.clear_cache(self.class.cache_key_for_language_and_key(language_id, key))
     end
@@ -135,6 +142,7 @@ module Gibberish
         RAILS_DEFAULT_LOGGER.warn "Failed to create translation: #{translation.errors.full_messages}" unless translation.errors.empty?
       end
     end
+
     def translate_with_db(string, key, *args)
       return if reserved_keys.include? key
       target = translations[key] || create_translation(string,key,*args)
@@ -142,13 +150,16 @@ module Gibberish
       interpolate_string(target.dup, *arguments.dup)
     end
     alias_method_chain :translate, :db
+
     private
+
       def extract_arguments(args)
          if (options = args.first).is_a?(Hash)
            [:format].each {|opt| options.delete(opt)}
          end
          return args
       end
+
       def interpolate_string_with_db(string, *args)
         if string.is_a? Translation
           string.arguments = args
@@ -159,6 +170,7 @@ module Gibberish
       end
       alias_method_chain :interpolate_string, :db
   end
+
 end
 
 class ActionMailer::Base
