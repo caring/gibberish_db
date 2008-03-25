@@ -28,11 +28,11 @@ module Gibberish
 
     attr_accessor :arguments
 
-    def self.find_cached_by_language_and_key(lang,key)
+    def self.find_cached_by_language_and_key(lang, key)
       cache_key = cache_key_for_language_and_key(lang,key)
       cached = get_cache(cache_key) {nil}
       unless cached
-        cached = Translation.find_by_language_id_and_key(lang.id,key.to_s)
+        cached = Translation.find_by_language_id_and_key(lang.id, key.to_s, :include => :language)
         set_cache(cache_key, cached)
       end
       return cached
