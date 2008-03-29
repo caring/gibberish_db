@@ -5,14 +5,25 @@ module Gibberish
     acts_as_cached
     after_save :invalidate_cache
 
+    # I'm just going to hold onto these really strongly
+    # This will be a bug if we change the actual languages a lot
+    @@languages_by_name = {}
+    @@languages_by_id = {}
+
     def self.find_cached_by_name(name)
-      get_cache("find_by_name:#{name}") do
+      @@languages_by_name[name] ||= get_cache("find_by_name:#{name}") do
         find(:first, :conditions => {:name => name.to_s})
       end
     end
 
+    def self.find_cached_by_id(id)
+      @@languages_by_id[id] ||= get_cache id
+    end
+
     def invalidate_cache
       clear_cache "find_by_name:#{name}"
+      @@languages_by_name = {}
+      @@languages_by_id = {}
     end
 
   end
@@ -28,23 +39,18 @@ module Gibberish
 
     attr_accessor :arguments
 
-    def self.find_cached_by_language_and_key(lang, key)
-      cache_key = cache_key_for_language_and_key(lang,key)
-      cached = get_cache(cache_key) {nil}
-      unless cached
-        cached = Translation.find_by_language_id_and_key(lang.id, key.to_s, :include => :language)
-        set_cache(cache_key, cached)
+    def self.full_cached
+      get_cache("everything") do
+        Translation.find(:all, :include => :language).group_by{|l| [l.language_id, l.key]}
       end
-      return cached
     end
 
-    def self.cache_key_for_language_and_key(lang,key)
-      lang_id = lang.is_a?(Language) ? lang.id : lang
-      ['find_by_language_id_and_key', lang_id, key.to_s[0..100]].join(':')
+    def self.find_cached_by_language_and_key(lang, key)
+      full_cached[[lang.is_a?(Language)?lang.id : lang, key]]
     end
 
     def invalidate_cache
-      self.class.clear_cache(self.class.cache_key_for_language_and_key(language_id, key))
+      self.class.clear_cache "everything"
     end
     
     def method_missing(name, *args, &block)
@@ -116,13 +122,23 @@ module Gibberish
   # this is an adapter that exposes a Hash access method
   # but calls to the model for the correct language.
   class Translator
+
     def initialize(language)
       @language = language
     end
+
     def translate(key)
-      Translation.find_cached_by_language_and_key(@language,key)
+      all_translations[[@language.is_a?(Language) ? @language.id : @language, key]]
     end
     alias_method :[], :translate
+
+    def all_translations
+      @cached ||= Translation.full_cached
+    end
+
+    def reset_translations
+      @cached = nil
+    end
   end
   
   module Localize
@@ -150,6 +166,10 @@ module Gibberish
       interpolate_string(target.dup, *arguments.dup)
     end
     alias_method_chain :translate, :db
+
+    def self.reset_translations
+      @@languages.each { |k,v| v.reset_translations }
+    end
 
     private
 
