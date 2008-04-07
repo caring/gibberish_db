@@ -77,7 +77,12 @@ module Gibberish
 
     def interpolate_with_hash(string, hash)
       hash.inject(string) do |target, (search, replace)|
-        target.gsub("{#{search}}", replace) if search and replace
+        if search and replace
+          target.gsub("{#{search}}", replace)
+        else
+          RAILS_DEFAULT_LOGGER.warn "Problem interpolating #{string} with #{hash.inspect}"
+          target
+        end
       end 
     end
 
