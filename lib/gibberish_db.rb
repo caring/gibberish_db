@@ -46,7 +46,7 @@ module Gibberish
     end
 
     def self.find_cached_by_language_and_key(lang, key)
-      full_cached[[lang.is_a?(Language)?lang.id : lang, key]]
+      full_cached[[lang.is_a?(Language) ? lang.id : lang, key]].first
     end
 
     def invalidate_cache
