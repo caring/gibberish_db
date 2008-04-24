@@ -46,6 +46,7 @@ module Gibberish
     def self.full_cached
       get_cache("everything") do
         returning({}) do |rv|
+          RAILS_DEFAULT_LOGGER.info "Loading translations."
           Translation.find(:all, :include => :language).group_by{|l| [l.language_id, l.key]}.each do |p|
             rv[p.first] = p.last.last
             rv[[p.first.first, p.first.last.to_sym]] = p.last.last
