@@ -84,6 +84,8 @@ module Gibberish
         interpolate_with_strings(self.value, args)
       end
     end
+    alias_method :to_s, :interpolated_value
+    alias_method :to_str, :interpolated_value
 
     def interpolate_with_hash(string, hash)
       hash.inject(string) do |target, (search, replace)|
@@ -98,14 +100,6 @@ module Gibberish
 
     def interpolate_with_strings(string, strings)
       string.gsub(/\{\w+\}/) { strings.shift }
-    end
-        
-    def to_str
-      interpolated_value
-    end
-    
-    def to_s
-      interpolated_value
     end
     
     def to_html
