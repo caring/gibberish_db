@@ -55,6 +55,7 @@ module Gibberish
 
     def invalidate_cache
       self.class.clear_cache "everything"
+      Gibberish::Localize::reset_translations
     end
     
     def method_missing(name, *args, &block)
