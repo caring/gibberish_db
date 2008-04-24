@@ -22,6 +22,10 @@ module Gibberish
 
     def invalidate_cache
       clear_cache "find_by_name:#{name}"
+      self.class.invalidate_cache
+    end
+
+    def self.invalidate_cache
       @@languages_by_name = {}
       @@languages_by_id = {}
     end
@@ -179,6 +183,7 @@ module Gibberish
 
     def self.reset_translations
       @@languages.each { |k,v| v.reset_translations }
+      Language.invalidate_cache
     end
 
     private
