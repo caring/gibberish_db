@@ -48,6 +48,7 @@ module Gibberish
         returning({}) do |rv|
           Translation.find(:all, :include => :language).group_by{|l| [l.language_id, l.key]}.each do |p|
             rv[p.first] = p.last.last
+            rv[[p.first.first, p.first.last.to_sym]] = p.last.last
           end
         end
       end
@@ -142,7 +143,7 @@ module Gibberish
     end
 
     def translate(key)
-      all_translations[[@language.is_a?(Language) ? @language.id : @language, key.to_s]]
+      all_translations[[@language.is_a?(Language) ? @language.id : @language, key]]
     end
     alias_method :[], :translate
 
