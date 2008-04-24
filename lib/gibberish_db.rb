@@ -41,7 +41,11 @@ module Gibberish
 
     def self.full_cached
       get_cache("everything") do
-        Translation.find(:all, :include => :language).group_by{|l| [l.language_id, l.key]}
+        returning({}) do |rv|
+          Translation.find(:all, :include => :language).group_by{|l| [l.language_id, l.key]}.each do |p|
+            rv[p.first] = p.last.last
+          end
+        end
       end
     end
 
@@ -133,7 +137,7 @@ module Gibberish
     end
 
     def translate(key)
-      all_translations[[@language.is_a?(Language) ? @language.id : @language, key]]
+      all_translations[[@language.is_a?(Language) ? @language.id : @language, key.to_s]]
     end
     alias_method :[], :translate
 
